@@ -173,6 +173,7 @@ class PackageJSONManager {
     private readonly basePath: () => string;
     public content: {
         version: string;
+        versionCode?: string;
     } | null = null;
 
     constructor(basePath: () => string) {
@@ -211,6 +212,32 @@ class PackageJSONManager {
         this.content!.version = next;
 
         return { next, current };
+    }
+
+    getVersionCode() {
+        return this.read().versionCode;
+    }
+
+    setVersionCode(next: string) {
+        const current = this.getVersionCode();
+        this.content!.versionCode = next;
+
+        return { next, current };
+    }
+
+    bumpVersionCode() {
+        const current = this.getVersionCode();
+        if (current) {
+            const currentCode = parseInt(current, 10);
+            const nextCode = currentCode + 1;
+            const next = nextCode.toString();
+            
+            this.content!.versionCode = next;
+            
+            return { next, current };
+        }
+        
+        return null;
     }
 }
 
@@ -277,6 +304,13 @@ class ProjectFilesManager {
                 current: gradleCurrent,
             } = this.buildGradle.bumpCode();
             console.log(`Android build.gradle code: ${gradleCurrent} -> ${gradleNext}`);
+        }
+
+        // Bump package.json versionCode
+        const packageVersionCodeResult = this.packageJSON.bumpVersionCode();
+        if (packageVersionCodeResult) {
+            const { next: packageNext, current: packageCurrent } = packageVersionCodeResult;
+            console.log(`package.json versionCode: ${packageCurrent} -> ${packageNext}`);
         }
     }
 
